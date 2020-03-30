@@ -12,7 +12,7 @@
 		<tycho-version>1.6.0</tycho-version>
 		<root-dir>${basedir}/..</root-dir>
 		<JENKINS_URL>https://ci.eclipse.org/xtext</JENKINS_URL>
-		<upstreamBranch>master</upstreamBranch>
+		<upstreamBranch>cd_asm8</upstreamBranch>
 	</properties>
 
 	<repositories>
