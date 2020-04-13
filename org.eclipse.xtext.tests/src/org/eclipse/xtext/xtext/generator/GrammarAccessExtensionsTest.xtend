@@ -8,9 +8,22 @@
  *******************************************************************************/
 package org.eclipse.xtext.xtext.generator
 
-import org.junit.Test
-import static org.junit.Assert.*
+import com.google.inject.Binder
+import com.google.inject.Guice
+import com.google.inject.Module
+import org.eclipse.xtext.Grammar
+import org.eclipse.xtext.XtextRuntimeModule
+import org.eclipse.xtext.common.TerminalsStandaloneSetup
+import org.eclipse.xtext.testing.util.ParseHelper
 import org.eclipse.xtext.xtext.generator.grammarAccess.GrammarAccessExtensions
+import org.eclipse.xtext.xtext.generator.model.project.IXtextProjectConfig
+import org.eclipse.xtext.xtext.generator.model.project.StandardProjectConfig
+import org.junit.Assert
+import org.junit.Test
+
+import static org.junit.Assert.*
+
+import static extension org.eclipse.xtext.util.Strings.toUnixLineSeparator
 
 /**
  * @author Sebastian Zarnekow - Initial contribution and API
@@ -49,5 +62,50 @@ class GrammarAccessExtensionsTest {
 			}
 		}
 	}
-	
+
+	@Test def void testGrammarFragmentToString() {
+		TerminalsStandaloneSetup.doSetup
+		val injector = Guice.createInjector(new XtextRuntimeModule(), new Module() {
+
+			override configure(Binder binder) {
+				binder.bind(IXtextProjectConfig).toInstance(new StandardProjectConfig)
+			}
+
+		});
+
+		val grammarAccessExtension = injector.getInstance(GrammarAccessExtensions)
+		val parserHelper = injector.getInstance(ParseHelper)
+
+		var grammar = parserHelper.parse('''
+			grammar org.xtext.example.mydsl.MyDsl
+
+			generate myDsl "http://www.xtext.org/example/mydsl/MyDsl"
+
+			OpOther:
+				  '->'
+				| '..<'
+				| '>' '..'
+				| '..'
+				| '=>'
+				| '>' (=>('>' '>') | '>')
+				| '<' (=>('<' '<') | '<' | '=>')
+				| '<>'
+				| '?:';
+		'''.toString.toUnixLineSeparator) as Grammar
+
+		val rule = grammar.rules.head
+
+		val actual = grammarAccessExtension.grammarFragmentToString(rule, "//")
+
+		Assert.assertEquals('''
+			//OpOther:
+			//	'->'
+			//	| '..<'
+			//	| '>' '..'
+			//	| '..'
+			//	| '=>'
+			//	| '>' (=> ('>' '>') | '>') | '<' (=> ('<' '<') | '<' | '=>') | '<>'
+			//	| '?:';
+		'''.toString.trim, actual)
+	}
 }

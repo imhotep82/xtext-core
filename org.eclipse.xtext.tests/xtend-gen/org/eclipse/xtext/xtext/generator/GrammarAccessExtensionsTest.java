@@ -8,8 +8,24 @@
  */
 package org.eclipse.xtext.xtext.generator;
 
+import com.google.inject.Binder;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.binder.AnnotatedBindingBuilder;
+import org.eclipse.emf.ecore.EObject;
+import org.eclipse.xtend2.lib.StringConcatenation;
+import org.eclipse.xtext.AbstractRule;
+import org.eclipse.xtext.Grammar;
+import org.eclipse.xtext.XtextRuntimeModule;
+import org.eclipse.xtext.common.TerminalsStandaloneSetup;
+import org.eclipse.xtext.testing.util.ParseHelper;
+import org.eclipse.xtext.util.Strings;
+import org.eclipse.xtext.xbase.lib.Exceptions;
 import org.eclipse.xtext.xbase.lib.Extension;
+import org.eclipse.xtext.xbase.lib.IterableExtensions;
 import org.eclipse.xtext.xtext.generator.grammarAccess.GrammarAccessExtensions;
+import org.eclipse.xtext.xtext.generator.model.project.IXtextProjectConfig;
+import org.eclipse.xtext.xtext.generator.model.project.StandardProjectConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -55,6 +71,84 @@ public class GrammarAccessExtensionsTest {
           }
         }
       }
+    }
+  }
+  
+  @Test
+  public void testGrammarFragmentToString() {
+    try {
+      TerminalsStandaloneSetup.doSetup();
+      XtextRuntimeModule _xtextRuntimeModule = new XtextRuntimeModule();
+      final Injector injector = Guice.createInjector(_xtextRuntimeModule, new com.google.inject.Module() {
+        @Override
+        public void configure(final Binder binder) {
+          AnnotatedBindingBuilder<IXtextProjectConfig> _bind = binder.<IXtextProjectConfig>bind(IXtextProjectConfig.class);
+          StandardProjectConfig _standardProjectConfig = new StandardProjectConfig();
+          _bind.toInstance(_standardProjectConfig);
+        }
+      });
+      final GrammarAccessExtensions grammarAccessExtension = injector.<GrammarAccessExtensions>getInstance(GrammarAccessExtensions.class);
+      final ParseHelper parserHelper = injector.<ParseHelper>getInstance(ParseHelper.class);
+      StringConcatenation _builder = new StringConcatenation();
+      _builder.append("grammar org.xtext.example.mydsl.MyDsl");
+      _builder.newLine();
+      _builder.newLine();
+      _builder.append("generate myDsl \"http://www.xtext.org/example/mydsl/MyDsl\"");
+      _builder.newLine();
+      _builder.newLine();
+      _builder.append("OpOther:");
+      _builder.newLine();
+      _builder.append("\t  ");
+      _builder.append("\'->\'");
+      _builder.newLine();
+      _builder.append("\t");
+      _builder.append("| \'..<\'");
+      _builder.newLine();
+      _builder.append("\t");
+      _builder.append("| \'>\' \'..\'");
+      _builder.newLine();
+      _builder.append("\t");
+      _builder.append("| \'..\'");
+      _builder.newLine();
+      _builder.append("\t");
+      _builder.append("| \'=>\'");
+      _builder.newLine();
+      _builder.append("\t");
+      _builder.append("| \'>\' (=>(\'>\' \'>\') | \'>\')");
+      _builder.newLine();
+      _builder.append("\t");
+      _builder.append("| \'<\' (=>(\'<\' \'<\') | \'<\' | \'=>\')");
+      _builder.newLine();
+      _builder.append("\t");
+      _builder.append("| \'<>\'");
+      _builder.newLine();
+      _builder.append("\t");
+      _builder.append("| \'?:\';");
+      _builder.newLine();
+      EObject _parse = parserHelper.parse(Strings.toUnixLineSeparator(_builder.toString()));
+      Grammar grammar = ((Grammar) _parse);
+      final AbstractRule rule = IterableExtensions.<AbstractRule>head(grammar.getRules());
+      final String actual = grammarAccessExtension.grammarFragmentToString(rule, "//");
+      StringConcatenation _builder_1 = new StringConcatenation();
+      _builder_1.append("//OpOther:");
+      _builder_1.newLine();
+      _builder_1.append("//\t\'->\'");
+      _builder_1.newLine();
+      _builder_1.append("//\t| \'..<\'");
+      _builder_1.newLine();
+      _builder_1.append("//\t| \'>\' \'..\'");
+      _builder_1.newLine();
+      _builder_1.append("//\t| \'..\'");
+      _builder_1.newLine();
+      _builder_1.append("//\t| \'=>\'");
+      _builder_1.newLine();
+      _builder_1.append("//\t| \'>\' (=> (\'>\' \'>\') | \'>\') | \'<\' (=> (\'<\' \'<\') | \'<\' | \'=>\') | \'<>\'");
+      _builder_1.newLine();
+      _builder_1.append("//\t| \'?:\';");
+      _builder_1.newLine();
+      Assert.assertEquals(_builder_1.toString().trim(), actual);
+    } catch (Throwable _e) {
+      throw Exceptions.sneakyThrow(_e);
     }
   }
 }
